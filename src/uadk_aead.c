@@ -174,7 +174,7 @@ static int uadk_e_aead_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *cke
         return 0;
     }
 
-    struct aead_cipher_priv_ctx *priv = (struct aead_cipher_priv_ctx*)EVP_CIPHER_CTX_get_cipher_date(ctx);
+    struct aead_cipher_priv_ctx *priv = (struct aead_cipher_priv_ctx*)EVP_CIPHER_CTX_get_cipher_data(ctx);
     if (priv == NULL) {
         fprintf(stderr, "priv is NULL.\n");
         return 0;
