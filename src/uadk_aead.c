@@ -57,7 +57,7 @@ static struct aead_engine engine;
 
 static EVP_CIPHER *uadk_aes_128_gcm = NULL;
 static EVP_CIPHER *uadk_aes_192_gcm = NULL;
-static EVP_CIPHER *uadk_aes_156_gcm = NULL;
+static EVP_CIPHER *uadk_aes_256_gcm = NULL;
 
 static handle_t sched_single_aead_init(handle_t h_sched_ctx, void *sched_param)
 {
@@ -118,7 +118,7 @@ static int uadk_e_wd_aead_cipher_init(struct uacce_dev *dev)
 
     engine.numa_id = dev->numa_id;
 
-    ret = uadk_e_is_env_enable("aead");
+    ret = uadk_e_is_env_enabled("aead");
     if (ret)
         return uadk_e_wd_aead_cipher_env_init(dev);
 
@@ -149,7 +149,7 @@ static int uadk_e_wd_aead_cipher_init(struct uacce_dev *dev)
     engine.sched.name = "sched_single";
     engine.sched.pick_next_ctx = sched_single_pick_next_ctx;
     engine.sched.poll_policy = sched_single_poll_policy;
-    engine.sched.sched_init = sched-single_aead_init;
+    engine.sched.sched_init = sched_single_aead_init;
 
     ret = wd_aead_init(&engine.ctx_cfg, &engine.sched);
     if (ret)
@@ -217,7 +217,7 @@ static int uadk_e_init_aead_cipher(void)
 
         dev = wd_get_accel_dev("aead");
         if (!dev) {
-            pthread_spin_lock(&engine.lock);
+            pthread_spin_unlock(&engine.lock);
             fprintf(stderr, "failed to get device for aead.\n");
             return 0;
         }
@@ -277,7 +277,7 @@ static int uadk_e_aead_cipher_set_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, v
     case EVP_CTRL_INIT:
         if (priv->assoc_bytes != 0) {
             free(priv->aadData);
-            priv->addData = NULL;
+            priv->aadData = NULL;
             priv->assoc_bytes = 0;
         }
 
@@ -367,7 +367,7 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     struct aead_cipher_priv_ctx *priv = (struct aead_cipher_priv_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     if (priv == NULL) {
-        fprintf(stderr, "priv id NULL.\n");
+        fprintf(stderr, "priv is NULL.\n");
         return -1;
     }
 
@@ -479,7 +479,7 @@ do {\
         !EVP_CIPHER_meth_set_cleanup(uadk_##name, cleanup) ||\
         !EVP_CIPHER_meth_set_set_asn1_params(uadk_##name, set_params) ||\
         !EVP_CIPHER_meth_set_get_asn1_params(uadk_##name, get_params) ||\
-        !EVP_CIPHER_meth_set_ctrl((uadk_##name, ctrl))\
+        !EVP_CIPHER_meth_set_ctrl(uadk_##name, ctrl))\
         return 0;\
 } while (0)
 
@@ -491,8 +491,8 @@ const EVP_CIPHER *uadk_create_gcm_cipher_meth(int nid)
         UADK_AEAD_DESCR(aes_128_gcm, AES_GCM_BLOCK_SIZE, 16, AES_GCM_IB_LEN,
                         GCM_FLAG, sizeof(struct aead_cipher_priv_ctx),
                         uadk_e_aead_cipher_init, uadk_e_do_aead_cipher,uadk_e_aead_cipher_cleanup,
-                        (EVP_CIPHER_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv),
-                        (EVP_CIPHER_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv),
+                        (EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv),
+                        (EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv),
                         uadk_e_aead_cipher_set_ctrl);
         aead = uadk_aes_128_gcm;
         break;
@@ -500,8 +500,8 @@ const EVP_CIPHER *uadk_create_gcm_cipher_meth(int nid)
         UADK_AEAD_DESCR(aes_192_gcm, AES_GCM_BLOCK_SIZE, 24, AES_GCM_IB_LEN,                     
                         GCM_FLAG, sizeof(struct aead_cipher_priv_ctx),                     
                         uadk_e_aead_cipher_init, uadk_e_do_aead_cipher,uadk_e_aead_cipher_cleanup,                     
-                        (EVP_CIPHER_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv),                     
-                        (EVP_CIPHER_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv),                     
+                        (EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv),                     
+                        (EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv),                     
                         uadk_e_aead_cipher_set_ctrl);                     
         aead = uadk_aes_192_gcm;                     
         break;
@@ -509,8 +509,8 @@ const EVP_CIPHER *uadk_create_gcm_cipher_meth(int nid)
         UADK_AEAD_DESCR(aes_256_gcm, AES_GCM_BLOCK_SIZE, 32, AES_GCM_IB_LEN,                     
                         GCM_FLAG, sizeof(struct aead_cipher_priv_ctx),                     
                         uadk_e_aead_cipher_init, uadk_e_do_aead_cipher,uadk_e_aead_cipher_cleanup,                     
-                        (EVP_CIPHER_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv),                     
-                        (EVP_CIPHER_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv),                     
+                        (EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv),                     
+                        (EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv),                     
                         uadk_e_aead_cipher_set_ctrl);                     
         aead = uadk_aes_256_gcm;                     
         break;
