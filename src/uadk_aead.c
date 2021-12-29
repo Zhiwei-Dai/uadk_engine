@@ -275,10 +275,10 @@ static int uadk_e_aead_cipher_set_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, v
 
     switch (type) {
     case EVP_CTRL_INIT:
-        if (priv->assoc_bytes != 0) {
+        if (priv->req.assoc_bytes != 0) {
             free(priv->aadData);
             priv->aadData = NULL;
-            priv->assoc_bytes = 0;
+            priv->req.assoc_bytes = 0;
         }
 
         priv->req.iv_bytes = 0;
