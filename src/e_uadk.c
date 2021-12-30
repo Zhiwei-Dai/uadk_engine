@@ -62,7 +62,7 @@ static const ENGINE_CMD_DEFN g_uadk_cmd_defns[] = {
 	{
 		UADK_CMD_ENABLE_AEAD_ENV,
                 "UADK_CMD_ENABLE_AEAD_ENV",
-                "Enable or Disable digest engine environment variable.",
+                "Enable or Disable aead engine environment variable.",
                 ENGINE_CMD_FLAG_NUMERIC
 	},
 	{
@@ -129,10 +129,10 @@ int uadk_cipher_nids_920[] = {
         NID_aes_256_xts,
         NID_sm4_cbc,
         NID_des_ede3_cbc,
-        NID_des_ede3_cbc,
+        NID_des_ede3_ecb,
         NID_aes_128_gcm,
         NID_aes_192_gcm,
-        NID_aes_256_gcm,
+        NID_aes_256_gcm
 };
 
 int uadk_cipher_nids_930[] = {
@@ -148,9 +148,9 @@ int uadk_cipher_nids_930[] = {
         NID_aes_128_xts,
         NID_aes_256_xts,
         NID_sm4_cbc,
-        NID_sm4_ebc,
+        NID_sm4_ecb,
         NID_des_ede3_cbc,
-        NID_aes_ede3_ecb,
+        NID_des_ede3_ecb,
         NID_aes_128_cfb128,
         NID_aes_192_cfb128,
         NID_aes_256_cfb128,
@@ -166,32 +166,32 @@ int uadk_cipher_nids_930[] = {
 };
 
 static NID_map info[] = {
-        {NID_aes_128_cbc, NULL}
-        {NID_aes_192_cbc, NULL}
-        {NID_aes_256_cbc, NULL}
-        {NID_aes_128_ctr, NULL}
-        {NID_aes_192_ctr, NULL}
-        {NID_aes_256_ctr, NULL}
-        {NID_aes_128_ecb, NULL}
-        {NID_aes_192_ecb, NULL}
-        {NID_aes_256_ecb, NULL}
-        {NID_aes_128_xts, NULL}
-        {NID_aes_256_xts, NULL}
-        {NID_sm4_cbc, NULL}
-        {NID_sm4_ebc, NULL}
-        {NID_des_ede3_cbc, NULL}
-        {NID_aes_ede3_ecb, NULL}
-        {NID_aes_128_cfb128, NULL}
-        {NID_aes_192_cfb128, NULL}
-        {NID_aes_256_cfb128, NULL}
-        {NID_aes_128_ofb128, NULL}
-        {NID_aes_192_ofb128, NULL}
-        {NID_aes_256_ofb128, NULL}
-        {NID_sm4_cfb128, NULL}
-        {NID_sm4_ofb128, NULL}
-        {NID_sm4_ctr, NULL}
-        {NID_aes_128_gcm, NULL}
-        {NID_aes_192_gcm, NULL}
+        {NID_aes_128_cbc, NULL},
+        {NID_aes_192_cbc, NULL},
+        {NID_aes_256_cbc, NULL},
+        {NID_aes_128_ctr, NULL},
+        {NID_aes_192_ctr, NULL},
+        {NID_aes_256_ctr, NULL},
+        {NID_aes_128_ecb, NULL},
+        {NID_aes_192_ecb, NULL},
+        {NID_aes_256_ecb, NULL},
+        {NID_aes_128_xts, NULL},
+        {NID_aes_256_xts, NULL},
+        {NID_sm4_cbc, NULL},
+        {NID_sm4_ebc, NULL},
+        {NID_des_ede3_cbc, NULL},
+        {NID_aes_ede3_ecb, NULL},
+        {NID_aes_128_cfb128, NULL},
+        {NID_aes_192_cfb128, NULL},
+        {NID_aes_256_cfb128, NULL},
+        {NID_aes_128_ofb128, NULL},
+        {NID_aes_192_ofb128, NULL},
+        {NID_aes_256_ofb128, NULL},
+        {NID_sm4_cfb128, NULL},
+        {NID_sm4_ofb128, NULL},
+        {NID_sm4_ctr, NULL},
+        {NID_aes_128_gcm, NULL},
+        {NID_aes_192_gcm, NULL},
         {NID_aes_256_gcm, NULL}
 };
 
@@ -385,39 +385,39 @@ static void bind_fn_kae_alg(ENGINE *e)
 }
 #endif
 
-void uadk_e_create_cipher(int idx)
+void uadk_e_create_ciphers(int idx)
 {
         switch(info[idx].nid) {
-                case NID_aes_128_gcm;
-                case NID_aes_192_gcm;
-                case NID_aes_256_gcm;
+		case NID_aes_128_gcm:
+		case NID_aes_192_gcm:
+		case NID_aes_256_gcm;:
                         info[idx].cipher = (EVP_CIPHER *)uadk_create_gcm_cipher_meth(info[idx].nid);
                 break;
-                case NID_aes_128_cbc;
-            case NID_aes_192_cbc;
-            case NID_aes_256_cbc;
-            case NID_aes_128_ctr;
-            case NID_aes_192_ctr;
-            case NID_aes_256_ctr;
-            case NID_aes_128_ecb;
-            case NID_aes_192_ecb;
-            case NID_aes_256_ecb;
-            case NID_aes_128_xts;
-            case NID_aes_256_xts;
-            case NID_sm4_cbc;
-            case NID_sm4_ecb;
-            case NID_des_ede3_cbc;
-            case NID_des_ede3_ecb;
-            case NID_aes_128_cfb128;
-            case NID_aes_192_cfb128;
-            case NID_aes_256_cfb128;
-            case NID_aes_128_ofb128;
-            case NID_aes_192_ofb128;
-            case NID_aes_256_ofb128;
-            case NID_sm4_cfb128;
-            case NID_sm4_ofb128;
-            case NID_sm4_ctr;
-                        info[index].cipher = (EVP_CIPHER *)uadk_create_cipher_meth(info[index].nid, info[index].keylen, platform);
+	    case NID_aes_128_cbc:
+	    case NID_aes_192_cbc:
+	    case NID_aes_256_cbc:
+	    case NID_aes_128_ctr:
+	    case NID_aes_192_ctr:
+	    case NID_aes_256_ctr:
+	    case NID_aes_128_ecb:
+	    case NID_aes_192_ecb:
+	    case NID_aes_256_ecb:
+	    case NID_aes_128_xts:
+	    case NID_aes_256_xts:
+	    case NID_sm4_cbc:
+	    case NID_sm4_ecb:
+	    case NID_des_ede3_cbc:
+	    case NID_des_ede3_ecb:
+	    case NID_aes_128_cfb128:
+	    case NID_aes_192_cfb128:
+	    case NID_aes_256_cfb128:
+	    case NID_aes_128_ofb128:
+	    case NID_aes_192_ofb128:
+	    case NID_aes_256_ofb128:
+	    case NID_sm4_cfb128:
+            case NID_sm4_ofb128：
+            case NID_sm4_ctr：
+                        info[idx].cipher = (EVP_CIPHER *)uadk_create_cipher_meth(info[idx].nid);
                 break;
             default:
                        break;
