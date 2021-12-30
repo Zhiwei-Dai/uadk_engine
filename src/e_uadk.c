@@ -162,7 +162,7 @@ int uadk_cipher_nids_930[] = {
         NID_sm4_ctr,
         NID_aes_128_gcm,
         NID_aes_192_gcm,
-        NID_aes_256_gcm,       
+        NID_aes_256_gcm       
 };
 
 static NID_map info[] = {
@@ -178,9 +178,9 @@ static NID_map info[] = {
         {NID_aes_128_xts, NULL},
         {NID_aes_256_xts, NULL},
         {NID_sm4_cbc, NULL},
-        {NID_sm4_ebc, NULL},
+        {NID_sm4_ecb, NULL},
         {NID_des_ede3_cbc, NULL},
-        {NID_aes_ede3_ecb, NULL},
+        {NID_des_ede3_ecb, NULL},
         {NID_aes_128_cfb128, NULL},
         {NID_aes_192_cfb128, NULL},
         {NID_aes_256_cfb128, NULL},
@@ -390,7 +390,7 @@ void uadk_e_create_ciphers(int idx)
         switch(info[idx].nid) {
 		case NID_aes_128_gcm:
 		case NID_aes_192_gcm:
-		case NID_aes_256_gcm;:
+		case NID_aes_256_gcm:
                         info[idx].cipher = (EVP_CIPHER *)uadk_create_gcm_cipher_meth(info[idx].nid);
                 break;
 	    case NID_aes_128_cbc:
@@ -415,8 +415,8 @@ void uadk_e_create_ciphers(int idx)
 	    case NID_aes_192_ofb128:
 	    case NID_aes_256_ofb128:
 	    case NID_sm4_cfb128:
-            case NID_sm4_ofb128：
-            case NID_sm4_ctr：
+	    case NID_sm4_ofb128:
+	    case NID_sm4_ctr:
                         info[idx].cipher = (EVP_CIPHER *)uadk_create_cipher_meth(info[idx].nid);
                 break;
             default:
