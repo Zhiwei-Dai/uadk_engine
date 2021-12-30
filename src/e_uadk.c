@@ -165,7 +165,7 @@ int uadk_cipher_nids_930[] = {
         NID_aes_256_gcm       
 };
 
-static NID_map info[] = {
+static cipher_info c_info[] = {
         {NID_aes_128_cbc, NULL},
         {NID_aes_192_cbc, NULL},
         {NID_aes_256_cbc, NULL},
@@ -195,8 +195,7 @@ static NID_map info[] = {
         {NID_aes_256_gcm, NULL}
 };
 
-static const unsigned int num_cc = (sizeof(info) / sizeof(info[0])); 
-
+static const unsigned int num_cc = (sizeof(c_info) / sizeof(c_info[0])); 
 
 int uadk_e_is_env_enabled(const char *alg_name)
 {
@@ -208,7 +207,6 @@ int uadk_e_is_env_enabled(const char *alg_name)
 			return uadk_env_enabled[i].env_enabled;
 		i++;
 	}
-
 	return 0;
 }
 
@@ -222,7 +220,6 @@ static void uadk_e_set_env_enabled(const char *alg_name, __u8 value)
 			uadk_env_enabled[i].env_enabled = value;
 			return;
 		}
-
 		i++;
 	}
 }
@@ -300,17 +297,17 @@ static int uadk_destroy(ENGINE *e)
 #endif
 
         if (uadk_cipher) {
-                uadk_e_destroy_cipher(info, num_cc);
-                uadk_e_destroy_aead(info, num_cc);
+                uadk_e_destroy_cipher(c_info, num_cc);
+                uadk_e_destroy_aead(c_info, num_cc);
         }
 	if (uadk_digest)
-		uadk_e_destroy_digest();
+	        uadk_e_destroy_digest();
 	if (uadk_rsa)
-		uadk_e_destroy_rsa();
+	        uadk_e_destroy_rsa();
 	if (uadk_ecc)
-		uadk_e_destroy_ecc();
+	        uadk_e_destroy_ecc();
 	if (uadk_dh)
-		uadk_e_destroy_dh();
+	        uadk_e_destroy_dh();
 	return 1;
 }
 
@@ -385,13 +382,13 @@ static void bind_fn_kae_alg(ENGINE *e)
 }
 #endif
 
-void uadk_e_create_ciphers(int idx)
+void uadk_e_create_ciphers(int index)
 {
-        switch(info[idx].nid) {
-		case NID_aes_128_gcm:
-		case NID_aes_192_gcm:
-		case NID_aes_256_gcm:
-                        info[idx].cipher = (EVP_CIPHER *)uadk_create_gcm_cipher_meth(info[idx].nid);
+        switch(c_info[index].nid) {
+	    case NID_aes_128_gcm:
+	    case NID_aes_192_gcm:
+	    case NID_aes_256_gcm:
+                        c_info[index].cipher = (EVP_CIPHER *)uadk_create_gcm_cipher_meth(c_info[index].nid);
                 break;
 	    case NID_aes_128_cbc:
 	    case NID_aes_192_cbc:
@@ -417,7 +414,7 @@ void uadk_e_create_ciphers(int idx)
 	    case NID_sm4_cfb128:
 	    case NID_sm4_ofb128:
 	    case NID_sm4_ctr:
-                        info[idx].cipher = (EVP_CIPHER *)uadk_create_cipher_meth(info[idx].nid);
+                        c_info[index].cipher = (EVP_CIPHER *)uadk_create_cipher_meth(c_info[index].nid);
                 break;
             default:
                        break;
@@ -436,9 +433,9 @@ static int uadk_e_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids
 
         dev = wd_get_accel_dev("cipher");
         if (!strcmp(dev->api, "hisi_qm_v2"))
-                        platform = KUNPENG920;
-                else
-                        platform = KUNPENG930;
+                platform = KUNPENG920;
+        else
+                platform = KUNPENG930;
 
         if (cipher == NULL) {
                  if (platform == KUNPENG920) {
@@ -451,12 +448,12 @@ static int uadk_e_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids
         }
 
         for(i = 0; i < num_cc; i++) {
-                if(nid == info[i].nid) {
-                        if(info[i].cipher == NULL)
+                if(nid == c_info[i].nid) {
+                        if(c_info[i].cipher == NULL)
                         {
                                 uadk_e_create_ciphers(i);
                         }
-                        *cipher = info[i].cipher;
+                        *cipher = c_info[i].cipher;
                         return 1;
                 }
         }
@@ -469,7 +466,7 @@ static void bind_fn_uadk_alg(ENGINE *e)
 	struct uacce_dev *dev;
 
 	dev = wd_get_accel_dev("cipher");
-	if(dev) {
+	if (dev) {
 		if (!ENGINE_set_ciphers(e, uadk_e_ciphers))
 			fprintf(stderr, "uadk bind cipher failed\n");
 		else

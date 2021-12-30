@@ -28,15 +28,15 @@ enum {
 	KUNPENG930,
 };
 
-typedef struct _NID_map {
+typedef struct _cipher_info {
     const int nid;
     EVP_CIPHER *cipher;
-} NID_map;
+} cipher_info;
 
 
 extern const char *engine_uadk_id;
-extern void uadk_e_destroy_aead(NID_map *info, int num);
-extern void uadk_e_destroy_cipher(NID_map *info, int num);
+extern void uadk_e_destroy_aead(cipher_info *info, int num);
+extern void uadk_e_destroy_cipher(cipher_info *info, int num);
 extern int uadk_e_bind_digest(ENGINE *e);
 extern void uadk_e_destroy_digest(void);
 extern int uadk_e_bind_rsa(ENGINE *e);

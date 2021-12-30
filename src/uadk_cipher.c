@@ -946,7 +946,7 @@ const EVP_CIPHER *uadk_create_cipher_meth(int nid)
 }
 
 
-static void destroy_cipher(NID_map *info, int num)
+static void destroy_cipher(cipher_info *info, int num)
 {
         for (int i = 0; i != num; ++i) {
                 if (info[i].cipher != NULL) {
@@ -957,7 +957,7 @@ static void destroy_cipher(NID_map *info, int num)
 }
 
 
-void uadk_e_destroy_cipher(NID_map *info, int num)
+void uadk_e_destroy_cipher(cipher_info *info, int num)
 {
 	int i, ret;
 

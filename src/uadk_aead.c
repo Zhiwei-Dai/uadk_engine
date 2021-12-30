@@ -22,19 +22,19 @@
 #include <uadk/wd_aead.h>
 #include "uadk.h"
 
-#define CTX_SYNC_ENC 0
-#define CTX_SYNC_DEC 1
+#define CTX_SYNC_ENC  0
+#define CTX_SYNC_DEC  1
 #define CTX_ASYNC_ENC 2
 #define CTX_ASYNC_DEC 3
-#define CTX_NUM 4
+#define CTX_NUM       4
 
 #define AES_GCM_BLOCK_SIZE 16
-#define AES_GCM_KEY_LEN 16
-#define AES_GCM_IV_LEN 12
-#define AES_GCM_TAG_LEN 16
-#define GCM_FLAG (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_GCM_MODE \
-                  | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_AEAD_CIPHER \
-                  | EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT)
+#define AES_GCM_KEY_LEN    16
+#define AES_GCM_IV_LEN     12
+#define AES_GCM_TAG_LEN    16
+#define GCM_FLAG           (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_GCM_MODE \
+                           | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_AEAD_CIPHER \
+                           | EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT)
 
 struct aead_cipher_priv_ctx {
     handle_t sess;
@@ -380,7 +380,7 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 if (priv->req.assoc_bytes != 0)
                     free(priv->aadData);
 
-                priv->aadData = (unsigned char *)malloc(aad_len);
+                priv->aadData = (unsigned char *)malloc(aad_len * sizeof(unsigned char));
                 if (priv->aadData == NULL) {
                     fprintf(stderr, "Unable to alloc memory for AAD.\n");
                     return -1;
@@ -397,7 +397,7 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             priv->req.out_buf_bytes = aad_len + inlen + AES_GCM_TAG_LEN + AES_GCM_TAG_LEN;
 
             if (aad_len != 0) {
-                com_buff = (unsigned char *)malloc(priv->req.out_buf_bytes);
+                com_buff = (unsigned char *)malloc(priv->req.out_buf_bytes * sizeof(unsigned char));
                 if (com_buff == NULL) {
                     fprintf(stderr, "Unable to alloc buff memory.\n");
                     return -1;
@@ -415,7 +415,6 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     priv->req.src = (unsigned char *)in;
                     priv->req.dst = out;
                 }
-
                 priv->req.in_bytes = inlen;
                 priv->req.out_bytes = aad_len + inlen + AES_GCM_TAG_LEN;
             }
@@ -424,15 +423,15 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     memcpy(com_buff, priv->aadData, aad_len);
                     memcpy(com_buff + aad_len, in, inlen);
                     memcpy(com_buff + aad_len + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
-                    priv->req.src=com_buff;
-                    priv->req.dst=com_buff;
+                    priv->req.src = com_buff;
+                    priv->req.dst = com_buff;
                 }
                 else {
-                    memcpy((unsigned char *)in + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
-                    priv->req.src=(unsigned char *)in;
-                    priv->req.dst=out;
+		    memcpy(com_buff, in, inlen);
+		    memcpy(com_buff + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
+                    priv->req.src = com_buff;
+                    priv->req.dst = out;
                 }
-
                 priv->req.in_bytes = inlen;
                 priv->req.out_bytes = aad_len + inlen;
             }
@@ -522,7 +521,7 @@ const EVP_CIPHER *uadk_create_gcm_cipher_meth(int nid)
     return aead;
 }
 
-void destroy_aead(NID_map *info, int num)
+void destroy_aead(cipher_info *info, int num)
 {
     int i;
 
@@ -534,7 +533,7 @@ void destroy_aead(NID_map *info, int num)
    }
 }
 
-void uadk_e_destroy_aead(NID_map* info, int num)
+void uadk_e_destroy_aead(cipher_info *info, int num)
 {
     int i, ret;
 
