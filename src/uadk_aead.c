@@ -76,7 +76,7 @@ static handle_t sched_single_aead_init(handle_t h_sched_ctx, void *sched_param)
     return (handle_t)skey;
 }
 
-static _u32 sched_single_pick_next_ctx(handle_t sched_ctx, void *sched_key, const int sched_mode)
+static __u32 sched_single_pick_next_ctx(handle_t sched_ctx, void *sched_key, const int sched_mode)
 {
     struct sched_params *key = (struct sched_params *)sched_key;
 
@@ -94,7 +94,7 @@ static _u32 sched_single_pick_next_ctx(handle_t sched_ctx, void *sched_key, cons
     }
 }
 
-static int sched_single_poll_policy(handle_t h_sched_ctx, _u32 expect, _u32 *count)
+static int sched_single_poll_policy(handle_t h_sched_ctx, __u32 expect, __u32 *count)
 {
     return 0;
 }
@@ -286,9 +286,9 @@ static int uadk_e_aead_cipher_set_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, v
     case EVP_CTRL_GET_IVLEN:
         *(int *)ptr = priv->req.iv_bytes;
         return 1;
-    case EVP_CTRL_SET_IVLEN:
+    case EVP_CTRL_GCM_SET_IVLEN:
         if (arg != AES_GCM_IV_LEN) {
-            fprint(stderr, "Only support 12 bytes.\n");
+            fprintf(stderr, "Only support 12 bytes.\n");
             return 0;
         }
         return 1;
@@ -306,7 +306,7 @@ static int uadk_e_aead_cipher_set_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, v
         memcpy(ptr, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
         return 1;
     case EVP_CTRL_GCM_SET_TAG:
-        if (args != AES_GCM_TAG_LEN || enc) {
+        if (arg != AES_GCM_TAG_LEN || enc) {
             fprintf(stderr, "Cannot do this when encrypto. Accepted value = 16 for TAG length.\n");
             return 0;
         }
@@ -406,10 +406,10 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
             if (enc) {
                 if (aad_len != 0) {
-                    memcpy(com_buff, priv->aadData, aadlen);
+                    memcpy(com_buff, priv->aadData, aad_len);
                     memcpy(com_buff + aad_len, in, inlen);
-                    priv->src = com_buff;
-                    priv->dst = com_buff;
+                    priv->req.src = com_buff;
+                    priv->req.dst = com_buff;
                 }
                 else {
                     priv->req.src = (unsigned char *)in;
@@ -417,15 +417,15 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 }
 
                 priv->req.in_bytes = inlen;
-                priv->out_bytes = aad_len + inlen + AES_GCM_TAG_LEN;
+                priv->req.out_bytes = aad_len + inlen + AES_GCM_TAG_LEN;
             }
             else {
                 if (aad_len != 0) {
-                    memcpy(com_buff, priv->aadData, aadlen);
+                    memcpy(com_buff, priv->aadData, aad_len);
                     memcpy(com_buff + aad_len, in, inlen);
                     memcpy(com_buff + aad_len + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
-                    priv->src=com_buff;
-                    priv->dst=com_buff;
+                    priv->req.src=com_buff;
+                    priv->req.dst=com_buff;
                 }
                 else {
                     memcpy((unsigned char *)in + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
@@ -434,7 +434,7 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 }
 
                 priv->req.in_bytes = inlen;
-                priv->out_bytes = aad_len + inlen;
+                priv->req.out_bytes = aad_len + inlen;
             }
 
             uadk_e_ctx_init(ctx,priv);
