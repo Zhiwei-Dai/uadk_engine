@@ -29,11 +29,11 @@
 #define CTX_NUM       4
 
 #define AES_GCM_BLOCK_SIZE 16
-#define AES_GCM_IV_LEN 12
-#define AES_GCM_TAG_LEN 16
-#define GCM_FLAG (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_GCM_MODE \
-                  | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_AEAD_CIPHER \
-                  | EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT)
+#define AES_GCM_IV_LEN     12
+#define AES_GCM_TAG_LEN    16
+#define GCM_FLAG           (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_GCM_MODE \
+                           | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_AEAD_CIPHER \
+                           | EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT)
 
 struct aead_cipher_priv_ctx {
     handle_t sess;
