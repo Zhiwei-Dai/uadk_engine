@@ -22,11 +22,11 @@
 #include <uadk/wd_aead.h>
 #include "uadk.h"
 
-#define CTX_SYNC_ENC 0
-#define CTX_SYNC_DEC 1
+#define CTX_SYNC_ENC  0
+#define CTX_SYNC_DEC  1
 #define CTX_ASYNC_ENC 2
 #define CTX_ASYNC_DEC 3
-#define CTX_NUM 4
+#define CTX_NUM       4
 
 #define AES_GCM_BLOCK_SIZE 16
 #define AES_GCM_IV_LEN 12
@@ -382,7 +382,7 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 if (priv->req.assoc_bytes != 0)
                     free(priv->aadData);
 
-                priv->aadData = (unsigned char *)malloc(aad_len);
+                priv->aadData = (unsigned char *)malloc(aad_len * sizeof(unsigned char));
                 if (priv->aadData == NULL) {
                     fprintf(stderr, "Unable to alloc memory for AAD.\n");
                     return -1;
@@ -504,7 +504,7 @@ const EVP_CIPHER *uadk_create_gcm_cipher_meth(int nid)
     return aead;
 }
 
-void destroy_aead(NID_map *info, int num)
+void destroy_aead(cipher_info *info, int num)
 {
     int i;
 
@@ -516,7 +516,7 @@ void destroy_aead(NID_map *info, int num)
    }
 }
 
-void uadk_e_destroy_aead(NID_map* info, int num)
+void uadk_e_destroy_aead(cipher_info *info, int num)
 {
     int i, ret;
 
