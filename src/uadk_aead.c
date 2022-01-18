@@ -29,7 +29,6 @@
 #define CTX_NUM       4
 
 #define AES_GCM_BLOCK_SIZE 16
-#define AES_GCM_KEY_LEN    16
 #define AES_GCM_IV_LEN     12
 #define AES_GCM_TAG_LEN    16
 #define GCM_FLAG           (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_GCM_MODE \
@@ -41,6 +40,7 @@ struct aead_cipher_priv_ctx {
     struct wd_aead_sess_setup setup;
     struct wd_aead_req req;
     unsigned char iv[AES_GCM_IV_LEN];
+    unsigned char tag[AES_GCM_TAG_LEN];
     const unsigned char *ckey;
     unsigned char *aadData;
 };
@@ -197,6 +197,8 @@ static int uadk_e_aead_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *cke
     priv->req.data_fmt = WD_FLAT_BUF;
     priv->req.iv_bytes = AES_GCM_IV_LEN;
     priv->req.iv = priv->iv;
+    priv->req.mac_bytes = AES_GCM_TAG_LEN;
+    priv->req.mac = priv->tag;
 
     priv->ckey = ckey;
 
@@ -346,7 +348,7 @@ static void uadk_e_ctx_init(EVP_CIPHER_CTX *ctx, struct aead_cipher_priv_ctx *pr
             fprintf(stderr, "uadk failed to alloc aead session!\n");
     }
 
-    ret = wd_aead_set_ckey(priv->sess, priv->ckey, AES_GCM_KEY_LEN);
+    ret = wd_aead_set_ckey(priv->sess, priv->ckey, EVP_CIPHER_CTX_key_length(ctx));
     if (ret) {
         wd_aead_free_sess(priv->sess);
         fprintf(stderr, "uadk failed to set ckey!\n");
@@ -394,47 +396,28 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
         else {
             aad_len = priv->req.assoc_bytes;
-            priv->req.out_buf_bytes = aad_len + inlen + AES_GCM_TAG_LEN + AES_GCM_TAG_LEN;
-
             if (aad_len != 0) {
-                com_buff = (unsigned char *)malloc(priv->req.out_buf_bytes * sizeof(unsigned char));
+                com_buff = (unsigned char *)malloc((aad_len + inlen) * sizeof(unsigned char));
                 if (com_buff == NULL) {
                     fprintf(stderr, "Unable to alloc buff memory.\n");
                     return -1;
                 }
-            }
+                memcpy(com_buff, priv->aadData, aad_len);
+                memcpy(com_buff + aad_len, in, inlen);
 
-            if (enc) {
-                if (aad_len != 0) {
-                    memcpy(com_buff, priv->aadData, aad_len);
-                    memcpy(com_buff + aad_len, in, inlen);
-                    priv->req.src = com_buff;
-                    priv->req.dst = com_buff;
-                }
-                else {
-                    priv->req.src = (unsigned char *)in;
-                    priv->req.dst = out;
-                }
-                priv->req.in_bytes = inlen;
-                priv->req.out_bytes = aad_len + inlen + AES_GCM_TAG_LEN;
+                priv->req.src = com_buff;
+                priv->req.dst = com_buff;
             }
             else {
-                if (aad_len != 0) {
-                    memcpy(com_buff, priv->aadData, aad_len);
-                    memcpy(com_buff + aad_len, in, inlen);
-                    memcpy(com_buff + aad_len + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
-                    priv->req.src = com_buff;
-                    priv->req.dst = com_buff;
-                }
-                else {
-		    memcpy(com_buff, in, inlen);
-		    memcpy(com_buff + inlen, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
-                    priv->req.src = com_buff;
-                    priv->req.dst = out;
-                }
-                priv->req.in_bytes = inlen;
-                priv->req.out_bytes = aad_len + inlen;
+                priv->req.src = (unsigned char *)in;
+                priv->req.dst = out;
             }
+
+            if (!enc)
+                memcpy(priv->tag, EVP_CIPHER_CTX_buf_noconst(ctx), AES_GCM_TAG_LEN);
+
+            priv->req.in_bytes = inlen;
+            priv->req.out_bytes = aad_len + inlen;
 
             uadk_e_ctx_init(ctx,priv);
             ret = wd_aead_set_authsize(priv->sess, AES_GCM_TAG_LEN);
@@ -446,7 +429,7 @@ static int uadk_e_do_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 return -1;
 
             if (enc)
-                memcpy(EVP_CIPHER_CTX_buf_noconst(ctx), priv->req.dst + aad_len + inlen, AES_GCM_TAG_LEN);
+                memcpy(EVP_CIPHER_CTX_buf_noconst(ctx), priv->req.mac, AES_GCM_TAG_LEN);
 
             if (aad_len != 0) {
                 memcpy(out, com_buff + aad_len, inlen);
